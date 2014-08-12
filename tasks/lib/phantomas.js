@@ -48,6 +48,7 @@ var TEMPLATE_FILE = path.resolve(
  */
 var Phantomas = function( grunt, options, done ) {
   this.dataPath         = path.normalize(  options.indexPath + 'data/' );
+  this.harPath          = path.normalize(  options.indexPath + 'har/' );
   this.done             = done;
   this.failedAssertions = [];
   this.grunt            = grunt;
@@ -198,6 +199,34 @@ Phantomas.prototype.createDataDirectory = function() {
   }.bind( this ) );
 };
 
+/**
+ * Create har directory in index path
+ * if it doesn't exist yet
+ *
+ *
+ * @return {Promise} Promise
+ *
+ * @tested
+ */
+Phantomas.prototype.createHarDirectory = function() {
+    return new Promise( function( resolve ) {
+        var exists = fs.existsSync( this.harPath );
+
+        if ( exists ) {
+            resolve();
+        } else {
+            fs.mkdirSync(
+                path.normalize(
+                    this.options.indexPath + 'har'
+                )
+            );
+
+            resolve();
+        }
+    }.bind( this ) );
+};
+
+
 
 /**
  * Create index directory to make sure
@@ -317,6 +346,10 @@ Phantomas.prototype.executePhantomas = function() {
         options[ 'film-strip-dir' ] = this.imagePath + this.timestamp;
       }
 
+      if(options['har'])
+      {
+            options['har'] = this.harPath + this.timestamp + '.run'+i + '.' + options['har'];
+      }
       runs.push(
         phantomas(
           this.options.url,
@@ -514,6 +547,9 @@ Phantomas.prototype.kickOff = function() {
       // create data directory to prevent
       // fileIO errors
       .then( this.createDataDirectory )
+      // create har directory to prevent
+      // fileIO errors
+      .then( this.createHarDirectory )
       // execute the phantomas process
       // multiple runs according to
       // configuration
